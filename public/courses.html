@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moment 2 - REST web service</title>
+    <link href="stylesheets/style.css" type="text/css" rel="stylesheet">
+    <script type="text/javascript">
+
+        /* Get all courses */
+        const xmlhttp = new XMLHttpRequest();
+        let url = "http://localhost:3000/courses";
+        xmlhttp.open("GET", url, true);
+        /* If all is OK call parse object and call function to display */
+        xmlhttp.onload = function() {
+            if(this.readyState == 4 && this.status == 200) {
+                let courses = JSON.parse(this.responseText);
+                displayCourses(courses); //Send courses to function
+            }
+        }
+        xmlhttp.send();
+
+        /* Display courses */
+        function displayCourses(course) {
+            let out = "<table><tr><td>ID</td><td>Kurskod</td><td>Kursnamn</td><td>Period</td></tr>";
+            let i;
+            for(i = 0; i < course.length; i++) {
+                out += '<tr><td>' + course[i]._id + '</td><td>'
+                    + course[i].courseId + '</td><td>'
+                    + course[i].courseName + '</td><td>'
+                    + course[i].coursePeriod + '</td><td><button type="button" id=' + course[i]._id + '>Radera</button></td>';
+            }
+            out += "</table>";
+            document.getElementById("course-list").innerHTML = out;
+
+            /* When buttons are clicked, call funtion to delete course */
+            let btns = document.querySelectorAll("button");
+            for (i=0; i < btns.length; i++) {
+                btns[i].addEventListener("click", function() { deleteCourse(this.id); }); //Send id to function
+            }
+        }
+
+        /* Delete course */
+        function deleteCourse(id) {
+            const xmlhttp = new XMLHttpRequest();
+            let url = "http://localhost:3000/courses/"+id;
+            xmlhttp.open("DELETE", url, true);
+
+            /* If all is OK call parse object and reload */
+            xmlhttp.onload = function() {
+            let courses = JSON.parse(this.responseText);
+                if(this.readyState == 4 && this.status == 200) {
+                    location.reload();
+
+                }
+            }
+            xmlhttp.send();
+        }
+    </script>
+</head>
+<body>
+    <h1>Moment 2 - REST web service</h1>
+    <h2>By Moa Hjemdahl</h2>
+
+    <div id="course-list"></div>
+</body>
+</html>
