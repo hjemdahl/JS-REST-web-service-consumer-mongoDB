@@ -1,46 +1,91 @@
 var express = require('express');
 var router = express.Router();
 
-var courses = [{"_id":1,"courseId":"DT162G","courseName":"Javascript-baserad webbutveckling","coursePeriod":1},
-{"_id":2,"courseId":"IK060G","courseName":"Projektledning","coursePeriod":1},
-{"_id":3,"courseId":"DT071G","courseName":"Programmering i C#.NET","coursePeriod":2},
-{"_id":4,"courseId":"DT148G","courseName":"Webbutveckling för mobila enheter","coursePeriod":2},
-{"_id":5,"courseId":"DT102G","courseName":"ASP.NET med C#","coursePeriod":3},
-{"_id":6,"courseId":"IG021G","courseName":"Affärsplaner och kommersialisering","coursePeriod":3},
-{"_id":7,"courseId":"DT069G","courseName":"Multimedia för webben","coursePeriod":4},
-{"_id":8,"courseId":"DT080G","courseName":"Självständigt arbete","coursePeriod":4}];
+const bodyParser = require('body-parser');
+router.use(
+    bodyParser.urlencoded({
+      extended: true
+    })
+)
+router.use(bodyParser.json());
 
-/* GET all courses */
-router.get('/', function(req, res, next) {
-  var jsonObj = JSON.stringify(courses);
-  res.contentType('application/json');
-  res.send(jsonObj);
-});
+/* Database connection */
+var mongoose = require('mongoose');
+mongoose.connect('mongodb://localhost/courses');
+mongoose.Promise = global.Promise;
 
-/* GET course by ID */
-router.get('/:id', function(req, res, next) {
-  var id = req.params.id;
-  var index = -1;
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error: '));
+db.once('open', function (callback) {
+	console.log("Connected to db");
 
-	for(var i=0; i < courses.length; i++){
-		if(courses[i]._id == id) index = i;
-	} 
-	res.contentType('application/json');
-	res.send(index>=0?courses[index]:'{}');
-});
+	//Create db scheme
+	var courseSchema = mongoose.Schema( {
+		courseId: String,
+		courseName: String,
+		coursePeriod: String,
+	});
 
-/* DELETE course by ID */
-router.delete('/:id', function(req, res, next) {
-	var id = req.params.id;
-	var del=-1;
+	//Create scheme model
+	var Course = mongoose.model('Course', courseSchema);
 
-	for(var i=0; i < courses.length; i++){
-		if(courses[i]._id == id) del = i;
-	} 
-	if(del>=0) status=courses.splice(del, 1);
+	// Get all courses from db
+	router.get('/', function(req, res, next) {
 
-	res.contentType('application/json');
-	res.send(id);
+		Course.find(function(err, courses) {
+			if(err) return console.error(err);  
+			var jsonObj = JSON.stringify(courses);
+			res.contentType('application/json');
+			res.send(jsonObj);
+		});
+  	});
+	  
+	// Get course from db by Id
+	router.get('/:id', function(req, res, next) {
+		var id = req.params.id;
+
+		Course.findOne({ "_id": id }, function(err, oneCourse) {
+			if(err) return console.error(err);  
+			var jsonObj = JSON.stringify(oneCourse);
+			res.contentType('application/json');
+			res.send(jsonObj);
+		});
+	});
+
+	
+	// Delete course from db by Id
+	router.delete('/:id', function(req, res, next) {
+		var id = req.params.id;
+
+		Course.deleteOne({ "_id": id }, function (err) {
+			if (err) return handleError(err);
+		});
+
+		Course.find(function(err, courses) {
+			if(err) return console.error(err);  
+			var jsonObj = JSON.stringify(courses);
+			res.contentType('application/json');
+			res.send(jsonObj);
+		});
+	});
+
+	// Add course to db
+	router.post('/', function(req, res, next) {
+		
+		var newCourse = new Course({ 
+			courseId: req.body.courseId,
+			courseName: req.body.courseName,
+			coursePeriod: req.body.coursePeriod
+		});	
+	
+		newCourse.save(function(err) {
+			if(err) return console.error(err);
+		});
+	
+		var jsonObj = JSON.stringify(newCourse);
+		res.contentType('application/json');
+		res.send(jsonObj);
+	});
 });
 
 module.exports = router;

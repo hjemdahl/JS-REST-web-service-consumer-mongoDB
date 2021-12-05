@@ -8,6 +8,12 @@ h1 {
 h2 {
   color: #005d81;
 }
+h3 {
+  margin-top: 30px;
+}
 td {
   padding: 0 20px 5px 0;
+}
+input {
+  margin: 0px 10px 5px 2px;
 }

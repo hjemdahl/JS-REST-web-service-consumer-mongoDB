@@ -4,8 +4,27 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moment 2 - REST web service</title>
+    <title>Moment 3 - REST web service with db</title>
     <link href="stylesheets/style.css" type="text/css" rel="stylesheet">
+</head>
+<body>
+    <h1>Moment 2 - REST web service</h1>
+    <h2>By Moa Hjemdahl</h2>
+
+    <div id="course-list"></div>
+
+    <div>
+        <h3>Lägg till kurs</h3>
+        <form action="POST">
+            <label for="courseId">Kurskod</label>
+            <input type="text" name="courseId" id="courseId">
+            <label for="courseName">Kursnamn</label>
+            <input type="text" name="courseName" id="courseName">
+            <label for="coursePeriod">Period</label>
+            <input type="text" name="coursePeriod" id="coursePeriod">
+            <input type="submit" value="Lägg till" id="submit">
+        </form>
+    </div>
     <script type="text/javascript">
 
         /* Get all courses */
@@ -23,10 +42,10 @@
 
         /* Display courses */
         function displayCourses(course) {
-            let out = "<table><tr><td>ID</td><td>Kurskod</td><td>Kursnamn</td><td>Period</td></tr>";
+            let out = "<table id='course-table'><tr><td>Kurskod</td><td>Kursnamn</td><td>Period</td></tr>";
             let i;
             for(i = 0; i < course.length; i++) {
-                out += '<tr><td>' + course[i]._id + '</td><td>'
+                out += '<tr><td>'
                     + course[i].courseId + '</td><td>'
                     + course[i].courseName + '</td><td>'
                     + course[i].coursePeriod + '</td><td><button type="button" id=' + course[i]._id + '>Radera</button></td>';
@@ -52,17 +71,39 @@
             let courses = JSON.parse(this.responseText);
                 if(this.readyState == 4 && this.status == 200) {
                     location.reload();
-
                 }
             }
             xmlhttp.send();
         }
-    </script>
-</head>
-<body>
-    <h1>Moment 2 - REST web service</h1>
-    <h2>By Moa Hjemdahl</h2>
 
-    <div id="course-list"></div>
+        /* Add course */
+        document.getElementById('submit').addEventListener('click', function() {
+            const xmlhttp = new XMLHttpRequest();
+            let url = "http://localhost:3000/courses";
+
+            var doc = {};
+            doc.courseId = document.getElementById('courseId').value;
+            doc.courseName = document.getElementById('courseName').value;
+            doc.coursePeriod = document.getElementById('coursePeriod').value;
+
+            xmlhttp.onload = function() {
+            let courses = JSON.parse(this.responseText);
+                if(this.readyState == 4 && this.status == 200) {
+                    document.getElementById("course-table").innerHTML += '<tr><td>'
+                    + courses.courseId + '</td><td>'
+                    + courses.courseName + '</td><td>'
+                    + courses.coursePeriod + '</td><td><button type="button" id=' + courses._id + '>Radera</button></td>';
+                    document.getElementById("courseId").value = "";
+                    document.getElementById("courseName").value = "";
+                    document.getElementById("coursePeriod").value = "";                          
+                    location.reload();      
+                }
+            };
+            xmlhttp.open("POST", url, true);
+            xmlhttp.setRequestHeader("Content-Type", "application/json");
+            xmlhttp.send(JSON.stringify(doc));
+        });
+
+    </script>
 </body>
 </html>
